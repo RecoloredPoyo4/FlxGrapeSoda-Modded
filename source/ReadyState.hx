@@ -1,6 +1,5 @@
 import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.FlxState;
 import flixel.text.FlxBitmapText;
 import flixel.util.FlxTimer;
 import haxe.Json;
@@ -22,13 +21,23 @@ class ReadyState extends BaseState
 	override public function create()
 	{
 		super.create();
-		this.bgColor = 0xFF111111;
+		FlxG.camera.bgColor = 0xFF111111;
 		var levelExists = Assets.exists(Paths.getLevel(PlayState.LEVEL));
 
 		if (levelExists)
 		{
 			var level:PlayerData = Json.parse(Assets.getText(Paths.getLevel(PlayState.LEVEL)));
-			Player.SKIN = Paths.getImage('player/${level.player}');
+			switch (level.player)
+			{
+				case "dylan":
+					Player.CHARACTER = Dylan;
+				case "luka":
+					Player.CHARACTER = Luka;
+				case "watanoge":
+					Player.CHARACTER = Watanoge;
+				case "asdonaur":
+					Player.CHARACTER = Asdonaur;
+			}
 		}
 		else
 			PlayState.DEMO_END = true;

@@ -13,6 +13,7 @@ import flixel.util.FlxTimer;
 import lime.app.Application;
 import lime.system.System;
 import objects.Player;
+import states.EditorState;
 import util.Menu;
 #if desktop
 import Discord.State;
@@ -53,9 +54,9 @@ class MenuState extends BaseState
 
 	function showMenu()
 	{
-		// more kills!
 		playText.kill();
 		player.kill();
+
 		var menu = new Menu(10, 30);
 
 		// Main Menu
@@ -80,6 +81,12 @@ class MenuState extends BaseState
 			}
 		}
 
+		#if desktop
+		var editor:MenuItem = {
+			text: "Map Editor",
+			event: (menu) -> FlxG.switchState(new EditorState())
+		}
+
 		var options:MenuItem = {
 			text: "Options",
 			event: (menu) -> menu.gotoPage("options")
@@ -89,12 +96,6 @@ class MenuState extends BaseState
 			text: "Exit",
 			event: (menu) -> System.exit(0)
 		}
-
-		#if desktop
-		menu.addPage("main", [newGame, options, exit]);
-		#elseif (android || web)
-		menu.addPage("main", [newGame, donate]);
-		#end
 
 		// Options Menu
 		var optFullWindow:MenuItem = {
@@ -122,8 +123,22 @@ class MenuState extends BaseState
 			event: (menu) -> menu.gotoPage("main")
 		}
 
+		var optGamepad:MenuItem = {
+			text: 'Gamepad: ${FlxG.save.data.detectGamepad ? "ON" : "OFF"}',
+			event: (menu) ->
+			{
+				FlxG.save.data.detectGamepad = !FlxG.save.data.detectGamepad;
+				menu.changeOptionName('Gamepad: ${FlxG.save.data.detectGamepad ? "ON" : "OFF"}');
+			}
+		}
+
+		menu.addPage("options", [optFullWindow, optMusicOff, optGamepad, optBack]);
+		menu.addPage("main", [newGame, editor, options, donate, exit]);
+		#else
+		menu.addPage("main", [newGame, donate]);
+		#end
+
 		#if desktop
-		menu.addPage("options", [optFullWindow, optMusicOff, donate, optBack]);
 		#end
 
 		menu.gotoPage("main");
@@ -181,7 +196,7 @@ class MenuState extends BaseState
 		logoText2.setPosition(0, 5);
 
 		var logoSoda = new FlxSprite(100, 0);
-		logoSoda.loadGraphic(Paths.getImage("items/grapesoda"), false, 12, 14);
+		logoSoda.loadGraphic(Paths.getImage("grapeSodaLogo"), false, 12, 14);
 		logoSoda.setGraphicSize(24, 28);
 		logoSoda.updateHitbox();
 		logoSoda.angle = -10;
@@ -203,7 +218,7 @@ class MenuState extends BaseState
 
 		// mini nivel
 		map = new FlxOgmo3Loader(Paths.getOgmoData(), Paths.getMap("menuMap"));
-		tileMap = map.loadTilemap(Paths.getImage("legacy/tileMap"), "Blocks");
+		tileMap = map.loadTilemap(Paths.getImage("map/tileMap"), "Blocks");
 		add(tileMap);
 		player = new Player(0, 0, true);
 		map.loadEntities(entitiesPos, "Entities");
@@ -216,11 +231,7 @@ class MenuState extends BaseState
 
 		// texto de la versión
 		versionText = new FlxBitmapText(Fonts.TOY);
-		#if nightly
-		versionText.text = 'Nightly version';
-		#else
 		versionText.text = 'v${Application.current.meta.get("version")}';
-		#end
 		versionText.alignment = RIGHT;
 		versionText.setPosition(FlxG.width - versionText.getStringWidth(versionText.text) - 10, FlxG.height - 15);
 		add(versionText);
@@ -258,7 +269,7 @@ class MenuState extends BaseState
 		if (player.alive && !player.isOnScreen())
 			showMenu();
 
-		if (Input.BACK || Input.BACK_ALT)
-			System.exit(0);
+		/*if (Input.BACK || Input.BACK_ALT)
+			System.exit(0); */
 	}
 }

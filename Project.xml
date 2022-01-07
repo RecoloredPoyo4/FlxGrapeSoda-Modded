@@ -11,13 +11,13 @@
 	<!-- ____________________________ Window Settings ___________________________ -->
 
 	<!--These window settings apply to all targets-->
-	<window width="1250" height="720" fps="60" background="#000000" hardware="true" vsync="true" />
+	<window width="1280" height="720" fps="60" background="#000000" hardware="true" vsync="true" />
 
 	<!--HTML5-specific-->
 	<window if="html5" resizable="false" />
 
 	<!--Desktop-specific-->
-	<window if="desktop" orientation="landscape" fullscreen="false" resizable="false" />
+	<window if="desktop" orientation="landscape" fullscreen="false" />
 
 	<!--Mobile-specific-->
 	<window if="mobile" orientation="landscape" fullscreen="true" width="0" height="0" />
@@ -54,6 +54,9 @@
 
 	<!--In case you want to use the ui package-->
 	<haxelib name="flixel-ui" if="desktop"/>
+
+	<!-- LuaJIT -->
+	<!--haxelib name="linc_luajit" if="desktop"/-->
 
 	<!--In case you want to use nape with flixel-->
 	<!--<haxelib name="nape-haxe4" />-->

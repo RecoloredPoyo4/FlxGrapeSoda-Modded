@@ -1,15 +1,13 @@
 package;
 
-import flixel.FlxCamera;
 import flixel.FlxG;
 import flixel.FlxObject;
 import flixel.FlxSprite;
 import flixel.addons.editors.ogmo.FlxOgmo3Loader;
-import flixel.addons.tile.FlxTilemapExt;
 import flixel.group.FlxGroup;
 import flixel.math.FlxPoint;
-import flixel.math.FlxRect;
 import flixel.text.FlxBitmapText;
+import flixel.tile.FlxTilemap;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
@@ -20,6 +18,7 @@ import objects.Enemy;
 import objects.Flag;
 import objects.Money;
 import objects.Player;
+import states.CharacterState;
 import util.Timer;
 #if desktop
 import Discord.State;
@@ -38,6 +37,7 @@ typedef LevelData =
 	var clouds:Bool;
 	var music:String;
 	var player:String;
+	var time:Int;
 }
 
 class PlayState extends BaseState
@@ -53,7 +53,7 @@ class PlayState extends BaseState
 	var checkpoint:FlxPoint;
 
 	// map variables
-	var walls:FlxTilemapExt;
+	var walls:FlxTilemap;
 	var coins:FlxTypedGroup<Money>;
 	var breakBlocks:FlxTypedGroup<BreakBlock>;
 	var pickyEnemy:FlxTypedGroup<Enemy>;
@@ -63,7 +63,7 @@ class PlayState extends BaseState
 	// misc
 	var offLimits:Bool = false;
 	var finished:Bool = false;
-	var tutorial:FlxTilemapExt;
+	var tutorial:FlxTilemap;
 
 	#if (desktop && cpp)
 	// discord
@@ -106,11 +106,22 @@ class PlayState extends BaseState
 	{
 		var playerX = (player.facing == FlxObject.LEFT) ? player.x - 6 : player.x;
 		var playerWidth = (player.facing == FlxObject.RIGHT) ? player.width + 6 : player.width;
-		var punchRay:FlxRect = new FlxRect(playerX, player.y, playerWidth, player.height);
-		breakBlocks.forEachAlive((block) ->
+
+		new FlxTimer().start(.1, (_) ->
 		{
-			if (punchRay.overlaps(block.getHitbox()))
-				new FlxTimer().start(.25, (timer:FlxTimer) -> block.hurt(1));
+			var tempRect = new FlxSprite(playerX, player.y).makeGraphic(Std.int(playerWidth), Std.int(player.height));
+			FlxG.overlap(tempRect, breakBlocks, (_rect, _block:BreakBlock) ->
+			{
+				if (_block.alive)
+					_block.hurt(1);
+				tempRect.destroy();
+			});
+			FlxG.overlap(tempRect, pickyEnemy, (_rect, _enemy:Enemy) ->
+			{
+				if (_enemy.alive)
+					_enemy.kill();
+				tempRect.destroy();
+			});
 		});
 	}
 
@@ -137,7 +148,7 @@ class PlayState extends BaseState
 		}
 	}
 
-	function finishLevel(player:Player, flag:Flag)
+	function finishLevel()
 	{
 		FlxG.sound.play(Paths.getSound("finish"));
 		Timer.stop();
@@ -161,10 +172,6 @@ class PlayState extends BaseState
 		HUD = new HUD();
 		add(HUD);
 
-		var uiCamera = new FlxCamera(0, 0, FlxG.width, FlxG.height);
-		uiCamera.pixelPerfectRender = true;
-		uiCamera.bgColor = FlxColor.TRANSPARENT;
-
 		var level:LevelData = null;
 		scenario = new FlxGroup();
 
@@ -180,25 +187,26 @@ class PlayState extends BaseState
 
 			FlxG.sound.playMusic(Paths.getMusic(level.music));
 
+			// Timer.setCountdown(true, level.time);
 			Timer.start(HUD);
 		}
 
 		// preparar el nivel
 		var map = new FlxOgmo3Loader(Paths.getOgmoData(), Paths.getMap(!DEMO_END ? level.map : "demoEnd"));
-		bgColor = !DEMO_END ? FlxColor.fromString(level.backColor) : 0xFF111111;
+		FlxG.camera.bgColor = !DEMO_END ? FlxColor.fromString(level.backColor) : 0xFF111111;
 
-		var backWalls = map.loadTilemapExt(Paths.getImage("legacy/backTileMap"), "BackBlocks");
+		var backWalls = map.loadTilemap(Paths.getImage("map/backTileMap"), "BackBlocks");
 		backWalls.follow();
 		backWalls.setTileProperties(0, FlxObject.NONE);
 		add(backWalls);
 
-		walls = map.loadTilemapExt(Paths.getImage("legacy/tileMap"), "Blocks");
+		walls = map.loadTilemap(Paths.getImage("map/tileMap"), "Blocks");
 		walls.follow();
 		walls.setTileProperties(0, FlxObject.NONE);
 		walls.setTileProperties(1, FlxObject.ANY);
 		scenario.add(walls);
 
-		var shop = map.loadTilemapExt(Paths.getImage("shop"), "Shop");
+		var shop = map.loadTilemap(Paths.getImage("shop"), "Shop");
 		shop.follow();
 		shop.setTileProperties(0, FlxObject.NONE);
 		add(shop);
@@ -206,10 +214,10 @@ class PlayState extends BaseState
 		#if !mobile
 		var keysPath:String = Paths.getImage("keys");
 		#if desktop
-		if (FlxG.gamepads.lastActive != null)
+		if (Input.isGamepadConnected)
 			keysPath = Paths.getImage("keysGamepad");
 		#end
-		tutorial = map.loadTilemapExt(keysPath, "Keys");
+		tutorial = map.loadTilemap(keysPath, "Keys");
 		tutorial.follow();
 		tutorial.setTileProperties(0, FlxObject.NONE);
 		add(tutorial);
@@ -259,7 +267,7 @@ class PlayState extends BaseState
 		#end
 
 		// preparar el juego
-		FlxG.camera.follow(player, PLATFORMER, 1);
+		FlxG.camera.follow(player, PLATFORMER);
 
 		#if (cpp && desktop)
 		if (!DEMO_END)
@@ -272,7 +280,6 @@ class PlayState extends BaseState
 			Discord.changePresence(State.DemoEnd);
 		#end
 
-		FlxG.cameras.add(uiCamera, false);
 		HUD.cameras = [uiCamera];
 		#if mobile
 		pad.cameras = [uiCamera];
@@ -301,7 +308,10 @@ class PlayState extends BaseState
 			FlxG.overlap(player, coins, playerTouchCoin);
 
 			if (!finished)
-				FlxG.overlap(player, flag, finishLevel);
+			{
+				if (player.x >= flag.x)
+					finishLevel();
+			}
 			else
 				player.velocity.x = Player.SPEED / 2;
 
@@ -323,12 +333,16 @@ class PlayState extends BaseState
 		if (Input.PAUSE || Input.PAUSE_ALT)
 		{
 			Timer.stop();
+			persistentUpdate = false;
 			openSubState(new Pause());
 		}
 
 		#if (debug && desktop)
 		if (FlxG.keys.justPressed.L)
-			finishLevel(player, flag);
+			finishLevel();
+
+		if (FlxG.keys.justPressed.EIGHT)
+			FlxG.switchState(new CharacterState());
 
 		if (FlxG.keys.justPressed.PAGEUP)
 			FlxG.camera.zoom += .1;

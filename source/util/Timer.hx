@@ -4,39 +4,60 @@ import flixel.util.FlxTimer;
 
 class Timer
 {
-	static var MINUTES:Int = 0;
-	static var SECONDS:Int = 0;
+	static var TOTAL_TIME:Int = 0;
+	static var LEVEL_TIME:Int = 0;
 	static var FTIMER:FlxTimer;
+	static var COUNTDOWN:Bool = false;
 
 	static function counter(_hud:HUD)
 	{
-		SECONDS++;
-		if (SECONDS >= 60)
-		{
-			SECONDS = 0;
-			MINUTES++;
-		}
+		TOTAL_TIME++;
+		LEVEL_TIME = COUNTDOWN ? LEVEL_TIME - 1 : LEVEL_TIME + 1;
 
 		if (_hud != null)
-			_hud.updateTimer(MINUTES, SECONDS);
+			_hud.updateTimer(minutes, seconds);
 	}
 
-	static public function getMinutes():Int
+	static public var minutes(get, null):Int;
+
+	static function get_minutes()
 	{
-		return MINUTES;
+		return Math.floor(LEVEL_TIME / 60);
 	}
 
-	static public function getSeconds():Int
+	static public var seconds(get, null):Int;
+
+	static function get_seconds()
 	{
-		return SECONDS;
+		return LEVEL_TIME - (minutes * 60);
 	}
 
-	static public function start(_hud:HUD = null)
+	static public function start(_hud:HUD = null, _time:Int = 0)
 	{
 		if (FTIMER == null || FTIMER.manager != null)
+		{
+			if (_time > 0)
+			{
+				COUNTDOWN = true;
+				LEVEL_TIME = _time;
+			}
+			else
+			{
+				COUNTDOWN = false;
+				LEVEL_TIME = 0;
+			}
+
 			FTIMER = new FlxTimer().start(1, (tmr) -> counter(_hud), 0);
+		}
 		else
 			FTIMER.active = true;
+	}
+
+	static public var isCountdown(get, null):Bool;
+
+	static function get_isCountdown()
+	{
+		return COUNTDOWN;
 	}
 
 	static public function stop()
@@ -46,6 +67,6 @@ class Timer
 
 	static public function restart()
 	{
-		MINUTES = SECONDS = 0;
+		TOTAL_TIME = 0;
 	}
 }

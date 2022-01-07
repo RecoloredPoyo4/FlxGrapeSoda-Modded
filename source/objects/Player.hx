@@ -6,13 +6,23 @@ import flixel.FlxSprite;
 import flixel.effects.FlxFlicker;
 import flixel.util.FlxTimer;
 
+enum Character
+{
+	Dylan;
+	Luka;
+	Watanoge;
+	Asdonaur;
+}
+
 class Player extends FlxSprite
 {
 	public static inline var SPEED:Float = 75;
-	public static var SKIN:String = Paths.getImage("player/dylan");
-	public static var LIVES:Int = 5;
 	static inline var GRAVITY:Float = 300;
 	static inline var JUMP_POWER:Float = 100;
+
+	public static var CHARACTER:Character = Dylan;
+	public static var LIVES:Int = 5;
+	public static var POWERUP:Bool = false;
 
 	public var canMove:Bool = true;
 	public var animated:Bool = true;
@@ -24,28 +34,58 @@ class Player extends FlxSprite
 	public var isPunching:Bool = false;
 	public var invencible:Bool = false;
 
-	var touch1_X:Float;
-	var touch2_X:Float;
-
 	var respawning:Bool = false;
+	var coyoteTime:Float = 0;
 
-	function loadSkin()
+	function loadSkin(character:Character)
 	{
-		loadGraphic(SKIN, true, 13, 20);
+		var skin:String;
 
-		// para las colisiones
-		setSize(8, 18);
-		offset.set(3, 2);
+		switch (CHARACTER)
+		{
+			case Dylan:
+				skin = Paths.getImage("player/dylan");
+			case Luka:
+				skin = Paths.getImage("player/luka");
+			case Watanoge:
+				skin = Paths.getImage("player/watanoge");
+			case Asdonaur:
+				skin = Paths.getImage("player/asdonaur");
+		}
 
-		// para las animaciones
-		setFacingFlip(FlxObject.LEFT, true, false);
-		setFacingFlip(FlxObject.RIGHT, false, false);
-		animation.add("default", [1, 2], 3);
-		animation.add("walk", [3, 4, 3, 5], 5);
-		animation.add("jump", [6], 0);
-		animation.add("sad", [9], 0);
-		animation.add("happy", [10], 0);
-		animation.add("punch", [12, 13, 14, 14, 13, 12], 12, false);
+		if (CHARACTER == Dylan && POWERUP)
+		{
+			loadGraphic(Paths.getImage("player/player"), true, 13, 26);
+
+			// para las colisiones
+			setSize(9, 24);
+			offset.set(4, 2);
+
+			// para las animaciones
+			setFacingFlip(FlxObject.LEFT, true, false);
+			setFacingFlip(FlxObject.RIGHT, false, false);
+			animation.add("default", [0, 1, 2, 3], 3);
+			animation.add("walk", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 8);
+			animation.add("jump", [20], 0);
+		}
+		else
+		{
+			loadGraphic(skin, true, 13, 20);
+
+			// para las colisiones
+			setSize(8, 18);
+			offset.set(3, 2);
+
+			// para las animaciones
+			setFacingFlip(FlxObject.LEFT, true, false);
+			setFacingFlip(FlxObject.RIGHT, false, false);
+			animation.add("default", [1, 2], 3);
+			animation.add("walk", [3, 4, 3, 5], 5);
+			animation.add("jump", [6], 0);
+			animation.add("sad", [9], 0);
+			animation.add("happy", [10], 0);
+			animation.add("punch", [12, 13, 14, 14, 13, 12], 12, false);
+		}
 	}
 
 	override public function hurt(damage:Float)
@@ -65,7 +105,7 @@ class Player extends FlxSprite
 	public function new(x:Float = 0, y:Float = 0, kinematic:Bool = false)
 	{
 		super(x, y);
-		loadSkin();
+		loadSkin(CHARACTER);
 		canMove = !kinematic;
 
 		health = LIVES;
@@ -107,31 +147,41 @@ class Player extends FlxSprite
 		if (jumping && !jump)
 			jumping = false;
 
-		if (jump && jumpTimer == -1 && isTouching(FlxObject.DOWN))
+		if (jump && jumpTimer == -1 && coyoteTime <= .2)
 			FlxG.sound.play(Paths.getSound("jump"));
 
+		// coyote time
+		if (isTouching(FlxObject.DOWN))
+			coyoteTime = 0;
+		else
+			coyoteTime += elapsed;
+
 		// reinicia el tiempo de salto al tocar el suelo
-		if (isTouching(FlxObject.DOWN) && !jumping)
+		if (coyoteTime <= .2 && !jumping)
 			jumpTimer = 0;
 
 		if (jumpTimer >= 0 && jump)
 		{
 			jumping = true;
+			coyoteTime = 1;
 			jumpTimer += elapsed;
 		}
 		else
 			jumpTimer = -1;
 
-		// mantener precionado para saltar más alto
+		// mantener presionado para saltar más alto
 		if (jumpTimer > 0 && jumpTimer < .25)
 			velocity.y = -JUMP_POWER;
 
-		if (punch && velocity.y == 0)
+		if (CHARACTER == Luka)
 		{
-			animation.play("punch");
-			isPunching = true;
-			if (punchCallback != null)
-				punchCallback();
+			if (punch && velocity.y == 0)
+			{
+				animation.play("punch");
+				isPunching = true;
+				if (punchCallback != null)
+					punchCallback();
+			}
 		}
 	}
 

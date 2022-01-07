@@ -35,7 +35,7 @@ class ShopState extends BaseState
 		Discord.changePresence(State.Shop);
 		#end
 
-		bgColor = FlxColor.BLACK;
+		FlxG.camera.bgColor = FlxColor.BLACK;
 
 		var background = new FlxSprite(INITIAL_X);
 		background.loadGraphic(Paths.getImage("shopInterior"));

@@ -6,5 +6,6 @@
     "lineHeight": 65,
     "clouds": true,
     "music": "50s-bit",
-    "player": "dylan"
+    "player": "dylan",
+    "time": 200
 }

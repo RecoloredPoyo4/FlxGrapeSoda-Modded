@@ -6,5 +6,6 @@
     "lineHeight": 150,
     "clouds": true,
     "music": "50s-bit",
-    "player": "luka"
+    "player": "luka",
+    "time": 300
 }

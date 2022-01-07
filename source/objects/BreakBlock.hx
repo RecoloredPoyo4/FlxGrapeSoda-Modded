@@ -2,6 +2,7 @@ package objects;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
+import flixel.util.FlxTimer;
 
 class BreakBlock extends FlxSprite
 {

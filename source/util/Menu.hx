@@ -89,7 +89,7 @@ class Menu extends FlxGroup
 			item.setPosition(x + 10, y - 5 + (i * 10));
 			#end
 
-			item.text = items[i].text;
+			item.text = items[i].text.toUpperCase();
 			item.useTextColor = true;
 			item.setBorderStyle(FlxTextBorderStyle.OUTLINE, accent);
 
@@ -104,8 +104,8 @@ class Menu extends FlxGroup
 
 	public function changeOptionName(newName:String)
 	{
-		options.get(actualPage)[selectedIndex].text = newName;
-		getOption().text = newName;
+		options.get(actualPage)[selectedIndex].text = newName.toUpperCase();
+		getOption().text = newName.toUpperCase();
 	}
 
 	override public function update(elapsed:Float)
