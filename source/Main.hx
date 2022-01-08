@@ -7,8 +7,8 @@ import openfl.display.Sprite;
 
 class Main extends Sprite
 {
-	var _width:Int = Game.REAL_WIDTH;
-	var _height:Int = Game.REAL_HEIGHT;
+	var _width:Int = Game.WIDTH;
+	var _height:Int = Game.HEIGHT;
 	var _initialState:Class<FlxState> = SavanLogo;
 
 	public function new()

@@ -5,6 +5,7 @@ import flixel.FlxSprite;
 import flixel.text.FlxBitmapText;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
+import states.ComicState;
 
 class SavanLogo extends BaseState
 {
@@ -46,6 +47,7 @@ class SavanLogo extends BaseState
 
 	function nextScene(timer:FlxTimer)
 	{
-		FlxG.camera.fade(1, () -> FlxG.switchState(new MenuState()));
+		// FlxG.switchState(new MenuState());
+		FlxG.switchState(new ComicState());
 	}
 }

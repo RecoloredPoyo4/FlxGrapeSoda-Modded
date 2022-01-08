@@ -48,6 +48,9 @@ class Timer
 			}
 
 			FTIMER = new FlxTimer().start(1, (tmr) -> counter(_hud), 0);
+
+			if (_hud != null)
+				_hud.updateTimer(minutes, seconds);
 		}
 		else
 			FTIMER.active = true;

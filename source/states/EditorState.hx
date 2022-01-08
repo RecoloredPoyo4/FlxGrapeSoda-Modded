@@ -1,10 +1,8 @@
 package states;
 
-import flixel.FlxCamera;
 import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.FlxState;
-import flixel.group.FlxGroup.FlxTypedGroup;
+import flixel.group.FlxGroup;
 import flixel.math.FlxRect;
 import flixel.text.FlxBitmapText;
 import flixel.tile.FlxTilemap;
@@ -15,16 +13,14 @@ enum EditorMode
 {
 	Tilemap;
 	Entity;
-	Playing;
+	Menu;
 }
 
 class EditorState extends BaseState
 {
-	static inline var TILE_WIDTH:Int = 12;
-	static inline var TILE_HEIGHT:Int = 12;
-
-	public var MAP_WIDTH:Int = 10;
-	public var MAP_HEIGHT:Int = 10;
+	var tilemapUI:FlxGroup;
+	var entityUI:FlxGroup;
+	var menuUI:FlxGroup;
 
 	var levelMap:FlxTypedGroup<FlxTilemap>;
 	var highlightBox:FlxSprite;
@@ -102,14 +98,14 @@ class EditorState extends BaseState
 
 	public function createMap()
 	{
-		var testMap = [for (i in 0...MAP_WIDTH * MAP_HEIGHT) 0];
+		var testMap = [for (i in 0...Game.MAP_WIDTH * Game.MAP_HEIGHT) 0];
 
 		if (levelMap != null)
 		{
 			levelMap.forEach((tilemap) -> tilemap.destroy());
 			levelMap.clear();
-			highlightBorders.makeGraphic(MAP_WIDTH * 12, MAP_HEIGHT * 12, FlxColor.TRANSPARENT);
-			FlxSpriteUtil.drawRect(highlightBorders, 0, 0, MAP_WIDTH * 12, MAP_HEIGHT * 12, FlxColor.TRANSPARENT, {color: FlxColor.RED});
+			highlightBorders.makeGraphic(Game.MAP_WIDTH * 12, Game.MAP_HEIGHT * 12, FlxColor.TRANSPARENT);
+			FlxSpriteUtil.drawRect(highlightBorders, 0, 0, Game.MAP_WIDTH * 12, Game.MAP_HEIGHT * 12, FlxColor.TRANSPARENT, {color: FlxColor.RED});
 		}
 		else
 		{
@@ -118,15 +114,15 @@ class EditorState extends BaseState
 		}
 
 		var layer2 = new FlxTilemap();
-		layer2.loadMapFromArray(testMap, MAP_WIDTH, MAP_HEIGHT, Paths.getImage("tilemaps/backgrass"), TILE_WIDTH, TILE_HEIGHT);
+		layer2.loadMapFromArray(testMap, Game.MAP_WIDTH, Game.MAP_HEIGHT, Paths.getImage("tilemaps/backgrass"), Game.TILE_WIDTH, Game.TILE_HEIGHT);
 		levelMap.add(layer2);
 
 		var layer1 = new FlxTilemap();
-		layer1.loadMapFromArray(testMap, MAP_WIDTH, MAP_HEIGHT, Paths.getImage("tilemaps/objects"), TILE_WIDTH, TILE_HEIGHT);
+		layer1.loadMapFromArray(testMap, Game.MAP_WIDTH, Game.MAP_HEIGHT, Paths.getImage("tilemaps/objects"), Game.TILE_WIDTH, Game.TILE_HEIGHT);
 		levelMap.add(layer1);
 
 		var layer0 = new FlxTilemap();
-		layer0.loadMapFromArray(testMap, MAP_WIDTH, MAP_HEIGHT, Paths.getImage("tilemaps/grass"), TILE_WIDTH, TILE_HEIGHT, FULL);
+		layer0.loadMapFromArray(testMap, Game.MAP_WIDTH, Game.MAP_HEIGHT, Paths.getImage("tilemaps/grass"), Game.TILE_WIDTH, Game.TILE_HEIGHT, FULL);
 		levelMap.add(layer0);
 
 		offsetTiles = 0;
@@ -136,14 +132,14 @@ class EditorState extends BaseState
 	function onEditorUpdate()
 	{
 		// Selector y función para colocar y sacar
-		var mouseX = Std.int(FlxG.mouse.x / TILE_WIDTH) - offsetTiles;
-		var mouseY = Std.int(FlxG.mouse.y / TILE_HEIGHT) - offsetTilesY;
-		var levelSize = new FlxRect(offsetTiles * 12, offsetTilesY * 12, (MAP_WIDTH * 12) - 1, (MAP_HEIGHT * 12) - 1);
+		var mouseX = Std.int(FlxG.mouse.x / Game.TILE_WIDTH) - offsetTiles;
+		var mouseY = Std.int(FlxG.mouse.y / Game.TILE_HEIGHT) - offsetTilesY;
+		var levelSize = new FlxRect(offsetTiles * 12, offsetTilesY * 12, (Game.MAP_WIDTH * 12) - 1, (Game.MAP_HEIGHT * 12) - 1);
 
 		if (FlxG.mouse.getPosition().inRect(levelSize))
 		{
-			highlightBox.x = Math.floor(FlxG.mouse.x / TILE_WIDTH) * TILE_WIDTH;
-			highlightBox.y = Math.floor(FlxG.mouse.y / TILE_HEIGHT) * TILE_HEIGHT;
+			highlightBox.x = Math.floor(FlxG.mouse.x / Game.TILE_WIDTH) * Game.TILE_WIDTH;
+			highlightBox.y = Math.floor(FlxG.mouse.y / Game.TILE_HEIGHT) * Game.TILE_HEIGHT;
 			highlightBox.visible = true;
 		}
 		else
@@ -155,17 +151,17 @@ class EditorState extends BaseState
 			levelMap.members[selectedLayer].setTile(mouseX, mouseY, 0);
 
 		// Ajustes para el "offset"
-		if (FlxG.keys.pressed.RIGHT)
-			offsetTiles++;
+		if (FlxG.keys.justPressed.RIGHT)
+			offsetTiles += Game.MAP_WIDTH;
 
-		if (FlxG.keys.pressed.LEFT)
-			offsetTiles--;
+		if (FlxG.keys.justPressed.LEFT)
+			offsetTiles -= Game.MAP_WIDTH;
 
-		if (FlxG.keys.pressed.UP)
-			offsetTilesY++;
+		if (FlxG.keys.justPressed.UP)
+			offsetTilesY += Game.MAP_HEIGHT;
 
-		if (FlxG.keys.pressed.DOWN)
-			offsetTilesY--;
+		if (FlxG.keys.justPressed.DOWN)
+			offsetTilesY -= Game.MAP_HEIGHT;
 
 		// Zoom
 		if (FlxG.keys.justPressed.PAGEUP)
@@ -198,11 +194,8 @@ class EditorState extends BaseState
 		if (FlxG.keys.justPressed.ESCAPE && !exited)
 		{
 			exited = true;
-			uiCamera.fade(0x11111111, () ->
-			{
-				FlxG.mouse.visible = false;
-				FlxG.switchState(new MenuState());
-			});
+			FlxG.mouse.visible = false;
+			FlxG.switchState(new MenuState());
 		}
 
 		// Menu Editor
@@ -226,9 +219,9 @@ class EditorState extends BaseState
 
 		// UI stuff
 		highlightBorders = new FlxSprite(0, 0);
-		highlightBorders.makeGraphic(MAP_WIDTH * 12, MAP_HEIGHT * 12, FlxColor.TRANSPARENT);
+		highlightBorders.makeGraphic(Game.MAP_WIDTH * 12, Game.MAP_HEIGHT * 12, FlxColor.TRANSPARENT);
 		add(highlightBorders);
-		FlxSpriteUtil.drawRect(highlightBorders, 0, 0, MAP_WIDTH * 12, MAP_HEIGHT * 12, FlxColor.TRANSPARENT, {color: FlxColor.RED});
+		FlxSpriteUtil.drawRect(highlightBorders, 0, 0, Game.MAP_WIDTH * 12, Game.MAP_HEIGHT * 12, FlxColor.TRANSPARENT, {color: FlxColor.RED});
 
 		var backgroundBorder = new FlxSprite(0, FlxG.height - 16);
 		backgroundBorder.makeGraphic(FlxG.width, 16, 0xFF0163C6);
@@ -267,7 +260,7 @@ class EditorState extends BaseState
 		createMap();
 
 		highlightBox = new FlxSprite(0, 0);
-		highlightBox.makeGraphic(TILE_WIDTH, TILE_HEIGHT, 0x99FF0000);
+		highlightBox.makeGraphic(Game.TILE_WIDTH, Game.TILE_HEIGHT, 0x99FF0000);
 		add(highlightBox);
 
 		// Configurar cámaras
@@ -291,7 +284,7 @@ class EditorState extends BaseState
 			case Tilemap:
 				onEditorUpdate();
 			case Entity:
-			case Playing:
+			case Menu:
 		}
 	}
 }

@@ -44,7 +44,7 @@ class Enemy extends FlxSprite
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
-		if (alive)
+		if (alive && isOnScreen())
 			velocity.x = speed * direction;
 	}
 }
