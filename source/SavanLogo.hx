@@ -47,7 +47,8 @@ class SavanLogo extends BaseState
 
 	function nextScene(timer:FlxTimer)
 	{
+		trace("Let's go!");
 		// FlxG.switchState(new MenuState());
-		FlxG.switchState(new ComicState());
+		FlxG.camera.fade(() -> FlxG.switchState(new ComicState()));
 	}
 }

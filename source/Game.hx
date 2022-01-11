@@ -3,8 +3,7 @@ import flixel.FlxG;
 class Game
 {
 	public static inline var PIXEL_PERFECT:Bool = false;
-	public static inline var TILE_WIDTH:Int = 12;
-	public static inline var TILE_HEIGHT:Int = 12;
+	public static inline var TILE_SIZE:Int = 12;
 	public static inline var MAP_WIDTH:Int = 21;
 	public static inline var MAP_HEIGHT:Int = 12;
 
@@ -41,11 +40,11 @@ class Game
 
 	static function get_WIDTH():Int
 	{
-		return TILE_WIDTH * MAP_WIDTH;
+		return TILE_SIZE * MAP_WIDTH;
 	}
 
 	static function get_HEIGHT():Int
 	{
-		return TILE_HEIGHT * MAP_HEIGHT;
+		return TILE_SIZE * MAP_HEIGHT;
 	}
 }

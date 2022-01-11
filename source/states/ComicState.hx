@@ -2,28 +2,50 @@ package states;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
+import flixel.text.FlxText;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
+import haxe.Json;
+import lime.utils.Assets;
+
+typedef ComicFile =
+{
+	var music:Null<String>;
+	var states:Array<ComicJSON>;
+}
+
+typedef ComicJSON =
+{
+	var pos:String;
+	var image:String;
+	var width:Null<Int>;
+	var height:Null<Int>;
+	var frames:Null<Array<Int>>;
+	var speed:Null<Int>;
+	var loop:Null<Bool>;
+	var time:Null<Int>;
+	var sound:Null<String>;
+}
 
 class ComicState extends BaseState
 {
-	public static var COMIC_INDEX:Int = 0;
+	public static var COMIC_NAME:String = "intro";
 
-	var comicNames:Array<String> = ["SodaCutscene"];
-	var actualComic:String;
-
+	var comic:ComicFile;
 	var imgLeft:FlxSprite;
 	var imgCenter:FlxSprite;
 	var imgRight:FlxSprite;
 	var imgFull:FlxSprite;
 
 	var comicState:Int = 0;
+	var skipped:Bool = false;
 
 	override function create()
 	{
 		super.create();
-		actualComic = comicNames[COMIC_INDEX];
 
-		imgLeft = new FlxSprite(12, 12);
+		imgLeft = new FlxSprite(Game.TILE_SIZE, Game.TILE_SIZE);
 		imgCenter = new FlxSprite();
 		imgRight = new FlxSprite();
 		imgFull = new FlxSprite();
@@ -38,78 +60,149 @@ class ComicState extends BaseState
 		add(imgRight);
 		add(imgFull);
 
-		// Comic inicial
-		if (actualComic == comicNames[0])
-			new FlxTimer().start(2, firstComic, 0);
+		// start comic
+		comic = Json.parse(Assets.getText('assets/data/cutscenes/$COMIC_NAME.json'));
+		trace(comic);
+		new FlxTimer().start(2, readComic, 0);
+
+		if (comic.music != null)
+			FlxG.sound.playMusic(Paths.getMusic(comic.music));
+
+		var skipString:String = "Press ENTER to skip!";
+		if (Input.isGamepadConnected)
+			skipString = "Press A to skip!";
+
+		var skipText:FlxText = new FlxText(8, skipString);
+		skipText.y = Game.HEIGHT - skipText.height - (Game.TILE_SIZE / 2);
+		skipText.color = FlxColor.WHITE;
+		add(skipText);
+
+		new FlxTimer().start(3, (_) -> FlxTween.num(1, 0, 2, (v) -> skipText.alpha = v));
 	}
 
-	function firstComic(tmr:FlxTimer)
+	function showLeftComic(image:String, width:Int = 0, height:Int = 0, ?anim:Array<Int>, frameSpeed:Int = 2, loop:Bool = true)
 	{
-		switch (comicState)
+		imgLeft.loadGraphic(Paths.getImage(image), anim != null, width, height);
+		if (anim != null)
 		{
-			case 0:
-				imgLeft.loadGraphic(Paths.getImage("cutscenes/SodaCutscene0"));
-				imgLeft.visible = true;
-			case 1:
-				imgCenter.loadGraphic(Paths.getImage("cutscenes/SodaCutscene1"), true, 60, 120);
-				imgCenter.setPosition(imgLeft.x + imgLeft.width + 12, 12);
-				imgCenter.animation.add("default", [0, 1], 2);
-				imgCenter.animation.play("default");
-				imgCenter.visible = true;
-				imgLeft.alpha = .5;
-			case 2:
-				imgRight.loadGraphic(Paths.getImage("cutscenes/SodaCutscene2"), true, 60, 120);
-				imgRight.setPosition(imgCenter.x + imgCenter.width + 12, 12);
-				imgRight.animation.add("default", [0, 1], 2);
-				imgRight.animation.play("default");
-				imgRight.visible = true;
-				imgCenter.alpha = .5;
-				imgCenter.animation.stop();
-			case 3:
-				imgFull.loadGraphic(Paths.getImage("cutscenes/SodaCutscene3"));
-				imgFull.visible = true;
-				imgRight.alpha = .5;
-				imgRight.animation.stop();
-			case 4:
-				imgLeft.visible = false;
-				imgCenter.visible = false;
-				imgRight.visible = false;
-				imgFull.visible = false;
-
-				imgLeft.alpha = 1;
-				imgCenter.alpha = 1;
-				imgRight.alpha = 1;
-			case 5:
-				imgLeft.loadGraphic(Paths.getImage("cutscenes/SodaCutscene4"), true, 60, 120);
-				imgLeft.animation.add("default", [0, 1], 2);
-				imgLeft.animation.play("default");
-				imgLeft.visible = true;
-			case 6:
-				imgCenter.loadGraphic(Paths.getImage("cutscenes/SodaCutscene5"), true, 84, 120);
-				imgCenter.setPosition(imgLeft.x + imgLeft.width + 12, 12);
-				imgCenter.animation.add("default", [0, 1, 2], 2, false);
-				imgCenter.animation.play("default");
-				imgCenter.visible = true;
-				imgLeft.alpha = .5;
-				imgLeft.animation.stop();
-				tmr.time = 3;
-			case 7:
-				imgRight.loadGraphic(Paths.getImage("cutscenes/SodaCutscene6"), true, 60, 120);
-				imgRight.setPosition(imgCenter.x + imgCenter.width + 12, 12);
-				imgRight.animation.add("default", [0, 1, 2], 2);
-				imgRight.animation.play("default");
-				imgRight.visible = true;
-				imgCenter.alpha = .5;
-				tmr.time = 4;
-			case 8:
-				FlxG.camera.fade(2, () -> FlxG.switchState(new MenuState()));
-				tmr.cancel();
+			imgLeft.animation.add("default", anim, frameSpeed, loop);
+			imgLeft.animation.play("default");
 		}
+		FlxTween.num(0, 1, .5, (v) -> imgLeft.alpha = v);
+		imgLeft.visible = true;
+	}
+
+	function showCenterComic(image:String, width:Int = 0, height:Int = 0, ?anim:Array<Int>, frameSpeed:Int = 2, loop:Bool = true)
+	{
+		imgCenter.loadGraphic(Paths.getImage(image), anim != null, width, height);
+		imgCenter.setPosition(imgLeft.x + imgLeft.width + Game.TILE_SIZE, Game.TILE_SIZE);
+		if (anim != null)
+		{
+			imgCenter.animation.add("default", anim, frameSpeed, loop);
+			imgCenter.animation.play("default");
+		}
+		FlxTween.num(0, 1, .5, (v) -> imgCenter.alpha = v);
+		imgCenter.visible = true;
+		FlxTween.num(1, .5, .5, (v) -> imgLeft.alpha = v);
+		if (imgLeft.animation.name != null)
+			imgLeft.animation.stop();
+	}
+
+	function showRightComic(image:String, width:Int = 0, height:Int = 0, ?anim:Array<Int>, frameSpeed:Int = 2, loop:Bool = true)
+	{
+		imgRight.loadGraphic(Paths.getImage(image), anim != null, width, height);
+		imgRight.setPosition(imgCenter.x + imgCenter.width + Game.TILE_SIZE, Game.TILE_SIZE);
+		if (anim != null)
+		{
+			imgRight.animation.add("default", anim, frameSpeed, loop);
+			imgRight.animation.play("default");
+		}
+		FlxTween.num(0, 1, .5, (v) -> imgRight.alpha = v);
+		imgRight.visible = true;
+		FlxTween.num(1, .5, .5, (v) -> imgCenter.alpha = v);
+		if (imgCenter.animation.name != null)
+			imgCenter.animation.stop();
+	}
+
+	function showFullComic(image:String, width:Int = 0, height:Int = 0, ?anim:Array<Int>, frameSpeed:Int = 2, loop:Bool = true)
+	{
+		imgFull.loadGraphic(Paths.getImage(image), anim != null, width, height);
+		imgFull.visible = true;
+		if (anim != null)
+		{
+			imgFull.animation.add("default", anim, frameSpeed, loop);
+			imgFull.animation.play("default");
+		}
+		imgRight.alpha = .5;
+		if (imgRight.animation.name != null)
+			imgRight.animation.stop();
+	}
+
+	function playSound(sound:String)
+	{
+		FlxG.sound.play(Paths.getSound(sound));
+		FlxTween.num(.25, 1, 1.5, (v) -> FlxG.sound.music.volume = v);
+	}
+
+	function hideComics()
+	{
+		imgLeft.visible = false;
+		imgCenter.visible = false;
+		imgRight.visible = false;
+		imgFull.visible = false;
+
+		imgLeft.alpha = 1;
+		imgCenter.alpha = 1;
+		imgRight.alpha = 1;
+		imgFull.alpha = 1;
+	}
+
+	function readComic(tmr:FlxTimer)
+	{
+		if (comicState >= comic.states.length)
+		{
+			FlxTween.num(1, 0, 3, {onComplete: (_) -> FlxG.sound.music.stop()}, (v) -> FlxG.sound.music.volume = v);
+			FlxG.camera.fade(4, () -> FlxG.switchState(new MenuState()));
+			tmr.cancel();
+			return;
+		}
+
+		var page = comic.states[comicState];
+		switch (page.pos)
+		{
+			case "left":
+				showLeftComic(page.image, page.width != null ? page.width : 0, page.height != null ? page.height : 0, page.frames,
+					page.speed != null ? page.speed : 2, page.loop != null ? page.loop : true);
+			case "center":
+				showCenterComic(page.image, page.width != null ? page.width : 0, page.height != null ? page.height : 0, page.frames,
+					page.speed != null ? page.speed : 2, page.loop != null ? page.loop : true);
+			case "right":
+				showRightComic(page.image, page.width != null ? page.width : 0, page.height != null ? page.height : 0, page.frames,
+					page.speed != null ? page.speed : 2, page.loop != null ? page.loop : true);
+			case "full":
+				showFullComic(page.image, page.width != null ? page.width : 0, page.height != null ? page.height : 0, page.frames,
+					page.speed != null ? page.speed : 2, page.loop != null ? page.loop : true);
+			case "hide":
+				hideComics();
+		}
+
+		if (page.time != null)
+			tmr.time = page.time;
+
+		if (page.sound != null)
+			playSound(page.sound);
+
 		comicState++;
 	}
 
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
+
+		if (!skipped && (Input.SELECT || Input.SELECT_ALT))
+		{
+			FlxG.camera.fade(2, () -> FlxG.switchState(new MenuState()));
+			skipped = true;
+		}
 	}
 }

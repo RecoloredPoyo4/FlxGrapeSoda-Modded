@@ -83,7 +83,7 @@ class MenuState extends BaseState
 
 		#if desktop
 		var editor:MenuItem = {
-			text: "Map Editor",
+			text: "Editor",
 			event: (menu) -> FlxG.switchState(new EditorState())
 		}
 
@@ -128,6 +128,7 @@ class MenuState extends BaseState
 			event: (menu) ->
 			{
 				FlxG.save.data.detectGamepad = !FlxG.save.data.detectGamepad;
+				Input.detectGamepad = FlxG.save.data.detectGamepad;
 				menu.changeOptionName('Gamepad: ${FlxG.save.data.detectGamepad ? "ON" : "OFF"}');
 			}
 		}
