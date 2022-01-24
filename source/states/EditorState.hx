@@ -195,13 +195,6 @@ class EditorState extends BaseState
 		if (FlxG.keys.justPressed.LEFT)
 			offsetView--;
 
-		// Zoom
-		if (FlxG.mouse.wheel > 0)
-			FlxG.camera.zoom += .25;
-
-		if (FlxG.mouse.wheel < 0)
-			FlxG.camera.zoom -= .25;
-
 		// Cambiar "tile" seleccionado
 		if (selectedLayer != 2)
 		{
@@ -261,7 +254,9 @@ class EditorState extends BaseState
 	override public function create()
 	{
 		super.create();
+		#if desktop
 		FlxG.mouse.visible = true;
+		#end
 		FlxG.sound.music.stop();
 
 		tilemapUI = new FlxGroup();
@@ -310,6 +305,7 @@ class EditorState extends BaseState
 	{
 		super.update(elapsed);
 
+		#if desktop
 		// Selector y función para colocar y sacar
 		mouseX = Std.int(FlxG.mouse.x / Game.TILE_SIZE);
 		mouseY = Std.int(FlxG.mouse.y / Game.TILE_SIZE);
@@ -335,7 +331,6 @@ class EditorState extends BaseState
 				uiBorder.alpha = sprLayers.alpha += .1;
 		}
 
-		#if desktop
 		if (FlxG.keys.justPressed.U)
 			uiCamera.visible = !uiCamera.visible;
 
