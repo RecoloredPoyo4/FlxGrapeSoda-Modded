@@ -29,6 +29,9 @@
 	<set name="BUILD_DIR" value="export/x86" if="legacyPC" />
 
 	<source name="source" />
+	
+	<!-- Legacy files -->
+	<assets path="assets/legacy" rename="assets" />
 
 	<section if="mobile">
 		<assets path="assets/base" rename="assets" />

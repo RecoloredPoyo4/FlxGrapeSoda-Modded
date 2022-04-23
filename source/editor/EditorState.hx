@@ -1,8 +1,10 @@
-package states;
+package editor;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.group.FlxGroup;
+import flixel.group.FlxSpriteGroup;
+import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
 import flixel.text.FlxBitmapText;
 import flixel.text.FlxText;
@@ -14,12 +16,28 @@ enum EditorMode
 {
 	Tilemap;
 	Entity;
-	Menu;
+	PlayerSelect;
+}
+
+enum Entities
+{
+	Player;
+	Coin;
+	Flag;
+	Enemy;
+	BreakWall;
+}
+
+typedef EntityData =
+{
+	var index:Int;
+	var position:FlxPoint;
 }
 
 class EditorState extends BaseState
 {
 	var editorState:EditorMode = Tilemap;
+	var canChangeState:Bool = true;
 
 	var tilemapUI:FlxGroup;
 	var entityUI:FlxGroup;
@@ -54,6 +72,15 @@ class EditorState extends BaseState
 	var currentEntity:FlxSprite;
 	var currentEntityName:FlxText;
 	var entityPos:FlxBitmapText;
+
+	var entitiesPos:Array<EntityData>;
+	var entityNames = [Player, Coin, Flag, BreakWall, Enemy];
+	var actualEntity:Int = 0;
+
+	// Player selector
+	var selectorText:FlxGroup;
+	var players:FlxSpriteGroup;
+	var playerSelected:String = "dylan";
 
 	// Map Editor functions!
 	function set_selectedTile(_newTile)
@@ -225,12 +252,13 @@ class EditorState extends BaseState
 	function onEntityCreate()
 	{
 		currentEntity = new FlxSprite();
-		currentEntity.loadGraphic(Paths.getImage("player/dylan"), true, 13, 20);
 		entityUI.add(currentEntity);
 
-		currentEntityName = new FlxText(2, Game.HEIGHT - 18, "PLAYER");
+		currentEntityName = new FlxText(2, Game.HEIGHT - 18);
 		currentEntityName.setFormat("assets/fonts/Toy.ttf", 16);
 		entityUI.add(currentEntityName);
+
+		loadEntity(currentEntity);
 
 		currentEntityName.cameras = [uiCamera];
 
@@ -244,6 +272,137 @@ class EditorState extends BaseState
 		{
 			currentEntity.x = Math.floor(FlxG.mouse.x / Game.TILE_SIZE) * Game.TILE_SIZE;
 			currentEntity.y = Math.floor(FlxG.mouse.y / Game.TILE_SIZE) * Game.TILE_SIZE;
+		}
+
+		if (FlxG.keys.justPressed.P)
+			changeState(PlayerSelect);
+
+		if (FlxG.mouse.wheel > 0)
+		{
+			actualEntity++;
+			loadEntity(currentEntity);
+		}
+
+		if (FlxG.mouse.wheel < 0)
+		{
+			actualEntity--;
+			loadEntity(currentEntity);
+		}
+		#end
+	}
+
+	function loadEntity(entity:FlxSprite)
+	{
+		if (actualEntity >= entityNames.length)
+			actualEntity = 0;
+
+		if (actualEntity < 0)
+			actualEntity = entityNames.length - 1;
+
+		switch (entityNames[actualEntity])
+		{
+			case Player:
+				loadPlayer(entity);
+			case Coin:
+				entity.loadGraphic(Paths.getImage('items/coin'), true, 12, 12);
+				currentEntityName.text = "COIN";
+			case Flag:
+				entity.loadGraphic(Paths.getImage('items/flag'), true, 24, 48);
+				currentEntityName.text = "FLAG";
+			case BreakWall:
+				entity.loadGraphic(Paths.getImage('breakBlock'), true, 12, 24);
+				currentEntityName.text = "BREAKWALL";
+			case Enemy:
+				entity.loadGraphic(Paths.getImage('picky'), true, 12, 12);
+				currentEntityName.text = "ENEMY - PICKY";
+		}
+	}
+
+	function loadPlayer(entity:FlxSprite)
+	{
+		entity.loadGraphic(Paths.getImage('skins/$playerSelected'), true, 12, 24);
+		currentEntityName.text = 'PLAYER - ${playerSelected.toUpperCase()}';
+	}
+
+	/*
+		Player selector
+	 */
+	function onPlayersCreate()
+	{
+		var names = ["dylan", "luka", "watanoge", "asdonaur"];
+		var baseX:Int = 0;
+		players = new FlxSpriteGroup();
+		selectorText = new FlxGroup();
+
+		for (v in names)
+		{
+			var player:FlxSprite = new FlxSprite(baseX);
+			player.loadGraphic(Paths.getImage('skins/$v'), true, 12, 24);
+			players.add(player);
+			baseX += 20;
+		}
+
+		var titleSelector:FlxText = new FlxText(0, 30, "Select a player!");
+		titleSelector.screenCenter(X);
+		players.screenCenter();
+
+		selectorText.add(titleSelector);
+		selectorText.add(players);
+		selectorText.visible = false;
+		add(selectorText);
+
+		selectorText.cameras = [uiCamera];
+	}
+
+	function onPlayersUpdate()
+	{
+		#if desktop
+		if (FlxG.keys.justPressed.ONE)
+		{
+			playerSelected = "dylan";
+			if (actualEntity == 0)
+				loadPlayer(currentEntity);
+
+			canChangeState = true;
+			blackBackground.visible = false;
+			selectorText.visible = false;
+			changeState(Entity);
+		}
+
+		if (FlxG.keys.justPressed.TWO)
+		{
+			playerSelected = "luka";
+			if (actualEntity == 0)
+				loadPlayer(currentEntity);
+
+			canChangeState = true;
+			blackBackground.visible = false;
+			selectorText.visible = false;
+			changeState(Entity);
+		}
+
+		if (FlxG.keys.justPressed.THREE)
+		{
+			playerSelected = "watanoge";
+			if (actualEntity == 0)
+				loadPlayer(currentEntity);
+
+			canChangeState = true;
+			blackBackground.visible = false;
+			selectorText.visible = false;
+			changeState(Entity);
+		}
+
+		if (FlxG.keys.justPressed.FOUR)
+		{
+			playerSelected = "asdonaur";
+			if (actualEntity == 0)
+				loadPlayer(currentEntity);
+
+			canChangeState = true;
+			blackBackground.visible = false;
+			selectorText.visible = false;
+			changeState(Entity);
 		}
 		#end
 	}
@@ -291,6 +450,8 @@ class EditorState extends BaseState
 		blackBackground.visible = false;
 		add(blackBackground);
 
+		onPlayersCreate();
+
 		// Configurar cámaras
 		uiBorder.cameras = [uiCamera];
 		sprLayers.cameras = [uiCamera];
@@ -317,7 +478,9 @@ class EditorState extends BaseState
 				onEditorUpdate();
 			case Entity:
 				onEntityUpdate();
-			case Menu:
+			case PlayerSelect:
+				onPlayersUpdate();
+			default:
 		}
 
 		if (FlxG.mouse.getPosition().inRect(uiBorder.getHitbox()) || FlxG.mouse.getPosition().inRect(sprLayers.getHitbox()))
@@ -334,11 +497,14 @@ class EditorState extends BaseState
 		if (FlxG.keys.justPressed.U)
 			uiCamera.visible = !uiCamera.visible;
 
-		if (FlxG.keys.justPressed.E)
-			changeState(Entity);
+		if (canChangeState)
+		{
+			if (FlxG.keys.justPressed.E)
+				changeState(Entity);
 
-		if (FlxG.keys.justPressed.T)
-			changeState(Tilemap);
+			if (FlxG.keys.justPressed.T)
+				changeState(Tilemap);
+		}
 
 		if (FlxG.keys.justPressed.ESCAPE)
 		{
@@ -362,7 +528,11 @@ class EditorState extends BaseState
 				entityUI.visible = true;
 				sprLayers.animation.frameIndex = 3;
 				editorText.text = "ENTITY EDITOR";
-			case Menu:
+			case PlayerSelect:
+				blackBackground.visible = true;
+				selectorText.visible = true;
+				canChangeState = false;
+			default:
 		}
 		editorState = state;
 	}

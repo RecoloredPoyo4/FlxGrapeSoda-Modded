@@ -13,7 +13,6 @@ import flixel.util.FlxTimer;
 import lime.app.Application;
 import lime.system.System;
 import objects.Player;
-import states.EditorState;
 import util.Menu;
 #if desktop
 import Discord.State;
@@ -84,7 +83,7 @@ class MenuState extends BaseState
 		#if desktop
 		var editor:MenuItem = {
 			text: "Editor",
-			event: (menu) -> FlxG.switchState(new EditorState())
+			event: (menu) -> FlxG.switchState(new editor.EditorState())
 		}
 
 		var options:MenuItem = {
@@ -197,7 +196,7 @@ class MenuState extends BaseState
 		logoText2.setPosition(0, 5);
 
 		var logoSoda = new FlxSprite(100, 0);
-		logoSoda.loadGraphic(Paths.getImage("grapeSodaLogo"), false, 12, 14);
+		logoSoda.loadGraphic(Paths.getImage("menu/grapeSodaLogo"), false, 12, 14);
 		logoSoda.setGraphicSize(24, 28);
 		logoSoda.updateHitbox();
 		logoSoda.angle = -10;

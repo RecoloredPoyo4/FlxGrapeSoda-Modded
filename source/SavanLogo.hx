@@ -20,15 +20,16 @@ class SavanLogo extends BaseState
 		var letter = new FlxSprite(Paths.getImage("logo/SDPixel2"));
 		letter.screenCenter();
 		letter.y -= 5;
-		add(letter);
 
 		var logo = new FlxSprite(letter.x, letter.y, Paths.getImage("logo/SDPixel"));
-		add(logo);
 
 		var sdText = new FlxBitmapText(Fonts.DEFAULT);
 		sdText.text = "SavanDev";
 		sdText.screenCenter();
 		sdText.y += 20;
+
+		add(logo);
+		add(letter);
 		add(sdText);
 
 		letter.visible = false;
