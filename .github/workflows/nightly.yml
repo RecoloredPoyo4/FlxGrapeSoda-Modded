@@ -1,7 +1,9 @@
-name: Nightly
+name: Android Build CI
+
+# Controls when the workflow will run
 on: [push, workflow_dispatch]
-    branches:
-      - main
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   web:
     name: Build for HTML5 (Web)
