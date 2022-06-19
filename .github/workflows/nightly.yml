@@ -1,6 +1,5 @@
-name: nightly
-on:
-  push:
+name: Nightly
+on: [push, workflow_dispatch]
     branches:
       - main
 jobs:
